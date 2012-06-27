@@ -47,7 +47,8 @@
 #define nFs5 739.989
 #define nF5  698.456
 #define nE5  659.255
-#define nDs5 622.254
+// #define nDs5 622.254 seems wrong
+#define nDs5 624.000
 // #define nD5  587.330 seems wrong
 #define nD5  590.000
 #define nCs5 554.365
@@ -61,7 +62,8 @@
 #define nFs4 369.994
 #define nF4  349.228
 #define nE4  329.628
-#define nDs4 311.127
+// #define nDs4 311.127 seems wrong
+#define nDs4 307.000
 // #define nD4  293.665 seems wrong
 #define nD4  290.500
 #define nCs4 277.183
