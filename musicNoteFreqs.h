@@ -57,13 +57,14 @@
 #define nB4  493.883
 #define nAs4 466.164
 #define nA4  440.000
-#define nGs4 415.305
+// #define nGs4 415.305 seems wrong
+#define nGs4 413.000
 #define nG4  391.995
 #define nFs4 369.994
 #define nF4  349.228
 #define nE4  329.628
 // #define nDs4 311.127 seems wrong
-#define nDs4 307.000
+#define nDs4 306.000
 // #define nD4  293.665 seems wrong
 #define nD4  290.500
 #define nCs4 277.183
