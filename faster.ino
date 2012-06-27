@@ -59,7 +59,6 @@ void setup() {
 	for (int i = 0; i < numSynths; i++) {
 		synthOff(synthAddr[i]);
 		synthLedOff(synthAddr[i]);
-		synthNoiseOn(synthAddr[i]);
 	}
 
 	lcd.begin(LCD_HORZ, LCD_VERT);
@@ -113,18 +112,25 @@ void updateHR() {
 
 void playNote() {
 
-	currTick = (millis() - trackStartTime) / currMsPerTick;
+	currTick = ((millis() - trackStartTime) / currMsPerTick) - 1; // -1 to start indexing at 0
 	if (currTick > lastTick) {
-		Serial.print("Tick: ");
+		/* Serial.print("Tick: ");
 		Serial.println(currTick);
+		Serial.print(partyRock1Tick[synth1TrackPos]);
+		Serial.print('\t');
+		Serial.println(synth1TrackPos); */
 		lastTick = currTick;
 		digitalWrite(pinDebug, !digitalRead(pinDebug));
 	}
-	if (partyRock1Note[partyRockLength] == -1) {
+	if (partyRock1Note[synth1TrackPos] == -1) {
 		restartTrack();
 	}
 	if (partyRock1Tick[synth1TrackPos] == currTick) {
 		synth1TrackPos++;
+		Serial.print("Note: ");
+		Serial.println(partyRock1Note[synth1TrackPos]);
+		synthOn(synthAddr[0]);
+		synthSetFreq(synthAddr[0], partyRock1Note[synth1TrackPos]);
 	}
 
 }
@@ -133,6 +139,8 @@ void restartTrack() {
 	Serial.println("Restarting track.");
 	trackStartTime = millis();
 	currTick = 0;
+	synth1TrackPos = 0;
+	synthOff(synthAddr[0]);
 }
 
 void changeTrack() {
