@@ -7,5 +7,7 @@ int currTrack = 0; // starting track
 int currBPM = bpmDB[currTrack];
 int currTicksPerBeat = ticksPerBeatDB[currTrack];
 int currMsPerTick = (60000 / currBPM) / currTicksPerBeat;
+int currTick = -1;
 int lastTick = -1;
 int trackStartTime = 0;
+int synth1TrackPos = 0;

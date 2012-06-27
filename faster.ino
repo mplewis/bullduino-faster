@@ -5,7 +5,7 @@
 #include "Wire.h"				// must be included before synthControl.h
 #include "synthControl.h"		// for controlling the ATtiny synths; requires Wire library
 #include "pulseSensor.h"		// for reading the pulse sensor module
-#include "digitalWriteFast.h"	// faster digital write library
+// #include "digitalWriteFast.h"	// faster digital write library
 
 #include "trackDB.h"			// stores the reference information for each track and initializes track bookkeeping vars
 #include "trackPartyRock.h"		// LMFAO - Party Rock Anthem
@@ -20,7 +20,7 @@ const int pinLcdData = 12;
 const int pinLcdClk = 13;
 const int pinLcdLatch = 11;
 
-// Connect via SPI. Data pin is #3, Clock is #2 and Latch is #4
+// Connect LCD via SPI using the Adafruit library: https://github.com/adafruit/LiquidCrystal
 LiquidCrystal lcd(pinLcdData, pinLcdClk, pinLcdLatch);
 
 // tracks: Party Rock Anthem, Harder Better Faster Stronger, Sabotage, D.A.N.C.E., Trololo
@@ -92,12 +92,12 @@ void readButtons() {
 
 void checkPulse() {
 	if (B) { // B is true when a pulse is triggered
-		Serial.print(" B");
+		// Serial.print(" B");
 		B = false; // Reset B for next time
 	}
 	if (QS) { // QS is true when a heart rate is calculated
-		Serial.println();
-		Serial.print(BPM);
+		// Serial.println();
+		// Serial.print(BPM);
 		updateHR();
 		QS = false; // reset for next time
 	}
@@ -113,18 +113,26 @@ void updateHR() {
 
 void playNote() {
 
-	int currTick = (millis() - trackStartTime) / currMsPerTick;
+	currTick = (millis() - trackStartTime) / currMsPerTick;
 	if (currTick > lastTick) {
-		/*Serial.print("Tick changed: ");
-		Serial.println(currTick); */
+		Serial.print("Tick: ");
+		Serial.println(currTick);
 		lastTick = currTick;
+		digitalWrite(pinDebug, !digitalRead(pinDebug));
 	}
-	if (currTick % currTicksPerBeat == 0) {
-		digitalWrite(pinDebug, HIGH);
-	} else {
-		digitalWrite(pinDebug, LOW);
+	if (partyRock1Note[partyRockLength] == -1) {
+		restartTrack();
+	}
+	if (partyRock1Tick[synth1TrackPos] == currTick) {
+		synth1TrackPos++;
 	}
 
+}
+
+void restartTrack() {
+	Serial.println("Restarting track.");
+	trackStartTime = millis();
+	currTick = 0;
 }
 
 void changeTrack() {
@@ -140,39 +148,22 @@ void changeTrack() {
 	currBPM = bpmDB[currTrack];
 	currTicksPerBeat = ticksPerBeatDB[currTrack];
 	currMsPerTick = (60000 / currBPM) / currTicksPerBeat;
-	int trackStartTime = millis();
+	
+	restartTrack();
 
 	updateTrackDisplay();
 
 }
 
 void updateTrackDisplay() {
+	String trackTitles[5] = {
+		"PrtyRckAnthem",
+		"HrdBetFstStrg",
+		"Sabotage     ",
+		"D.A.N.C.E.   ",
+		"Trolololololo"
+	};
 	lcd.setCursor(0, 3);
 	lcd.print("Track: ");
-	switch(currTrack) {
-		case 0:
-			lcd.print("PrtyRckAnthem");
-			break;
-
-		case 1:
-			lcd.print("HrdBetFstStrg");
-			break;
-
-		case 2:
-			lcd.print("Sabotage     ");
-			break;
-
-		case 3:
-			lcd.print("D.A.N.C.E.   ");
-			break;
-
-		case 4:
-			lcd.print("Trolololololo");
-			break;
-
-
-		default:
-			lcd.print("Error        ");
-			break;
-	}
+	lcd.print(trackTitles[currTrack]);
 }
