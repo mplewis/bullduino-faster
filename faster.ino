@@ -113,6 +113,7 @@ void updateHR() {
 void playNote() {
 
 	currTick = ((millis() - trackStartTime) / currMsPerTick) - 1; // -1 to start indexing at 0
+	Serial.println(currTick);
 	if (currTick > lastTick) {
 		/* Serial.print("Tick: ");
 		Serial.println(currTick);
@@ -121,25 +122,30 @@ void playNote() {
 		Serial.println(synth1TrackPos); */
 		lastTick = currTick;
 		digitalWrite(pinDebug, !digitalRead(pinDebug));
+		if (partyRock1Dura[synth1TrackPos] + partyRock1Tick[synth1TrackPos - 1] == currTick) {
+			synthOff(synthAddr[0]);
+		}
+		if (partyRock1Tick[synth1TrackPos + 1] == currTick) {
+			synth1TrackPos++;
+			Serial.print("Note: ");
+			Serial.println(partyRock1Note[synth1TrackPos]);
+			synthOn(synthAddr[0]);
+			synthSetFreq(synthAddr[0], partyRock1Note[synth1TrackPos]);
+		}
+		if (partyRock1Note[synth1TrackPos] == -1 && partyRock1Tick[synth1TrackPos] == currTick) {
+			restartTrack();
+		}
 	}
-	if (partyRock1Note[synth1TrackPos] == -1) {
-		restartTrack();
-	}
-	if (partyRock1Tick[synth1TrackPos] == currTick) {
-		synth1TrackPos++;
-		Serial.print("Note: ");
-		Serial.println(partyRock1Note[synth1TrackPos]);
-		synthOn(synthAddr[0]);
-		synthSetFreq(synthAddr[0], partyRock1Note[synth1TrackPos]);
-	}
+
+
 
 }
 
 void restartTrack() {
 	Serial.println("Restarting track.");
 	trackStartTime = millis();
-	currTick = 0;
-	synth1TrackPos = 0;
+	currTick = -1;
+	synth1TrackPos = -1;
 	synthOff(synthAddr[0]);
 }
 

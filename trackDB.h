@@ -10,4 +10,5 @@ int currMsPerTick = (60000 / currBPM) / currTicksPerBeat;
 long currTick = -1;
 long lastTick = -1;
 long trackStartTime = 0;
-int synth1TrackPos = 0;
+int synth1TrackPos = -1;
+long synth1LastTick = -1;
