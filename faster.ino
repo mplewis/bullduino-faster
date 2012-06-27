@@ -156,7 +156,7 @@ void changeTrack() {
 }
 
 void updateTrackDisplay() {
-	String trackTitles[5] = {
+	char* trackTitles[5] = {
 		"PrtyRckAnthem",
 		"HrdBetFstStrg",
 		"Sabotage     ",
