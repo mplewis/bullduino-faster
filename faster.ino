@@ -1,14 +1,12 @@
 // Friendly Automated Speaking Technological Expert Runner
 
-#include "Button.h"				// for button (next track, pedometer) handling
+#include "Bounce.h"				// for button (pedometer switch) handling
 #include "LiquidCrystal.h"		// for lcd display
 #include "Wire.h"				// must be included before synthControl.h
 #include "synthControl.h"		// for controlling the ATtiny synths; requires Wire library
 #include "pulseSensor.h"		// for reading the pulse sensor module
-// #include "digitalWriteFast.h"	// faster digital write library
-
-#include "trackDB.h"			// stores the reference information for each track and initializes track bookkeeping vars
-#include "trackPartyRock.h"		// LMFAO - Party Rock Anthem
+#include "digitalWriteFast.h"	// faster digital write library
+#include "trackInfo.h"			// data for LMFAO - Party Rock Anthem
 
 /* lcd display: 20 x 4
  * 4 lines: HR sliding bar display, HR numbers, steps, current track
@@ -24,7 +22,7 @@ const int pinLcdLatch = 11;
 LiquidCrystal lcd(pinLcdData, pinLcdClk, pinLcdLatch);
 
 const int pinPedometer = 3;
-Button pedometer = Button(pinPedometer, BUTTON_PULLUP);
+Bounce pedometer = Bounce(pinPedometer, 5); // 5ms debounce time
 const int tempoArraySize = 5;
 int lastTempo[tempoArraySize] = {0};
 int tempoArrayPos = 0;
@@ -72,9 +70,14 @@ void loop() {
 }
 
 void readButtons() {
-	/* if (pedometer.uniquePress()) {
+	pedometer.update();
+	if (pedometer.risingEdge()) {
 		updateTempo();
-	} */
+	}
+}
+
+void updateTempo() {
+	// nop
 }
 
 void checkPulse() {
