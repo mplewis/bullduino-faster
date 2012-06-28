@@ -29,8 +29,7 @@ int tempoArrayPos = 0;
 
 const int pinDebug = 13;
 
-const int numSynths = 1;
-int synthAddr[numSynths] = {02};
+
 
 void setup() {
 	Serial.begin(115200);
@@ -107,23 +106,54 @@ void updateHR() {
 
 void playNote() {
 
-	currTick = ((millis() - trackStartTime) / msPerTick) - 1; // -1 to start indexing at 0
-	if (currTick > lastTick) {
-		Serial.print(currTick);
-		Serial.print('\t');
-		Serial.print(pRock1Tick[synth1TrackPos]);
-		Serial.print('\t');
-		Serial.println(synth1TrackPos);
+	if (millis() > lastTickMs + msPerTick) {
+		lastTickMs = millis();
 		lastTick = currTick;
+		currTick++;
+
+		if (currTick == resetTick) {
+			restartTrack();
+		} else if (/* currTick % ticksPerBeat == 0 */ true) {
+			Serial.print("Time: ");
+			Serial.print(millis());
+			Serial.print("\tTick: ");
+			Serial.print(currTick);
+		}
+
+		if (currTick == pRock1NoteOffTick) {
+			synthOff(addrSyn1);
+		}
+
+		if (currTick == pRock1Tick[pRock1Pos]) {
+			Serial.print("\tNote: ");
+			Serial.print(pRock1Key[pRock1Pos]);
+			Serial.print("\tFreq: ");
+			Serial.print(pianoFreq[pRock1Key[pRock1Pos]]);
+
+			synthSetFreq(addrSyn1, pianoFreq[pRock1Key[pRock1Pos]]);
+			synthOn(addrSyn1);
+
+			pRock1NoteOffTick = currTick + pRock1Dura[pRock1Pos];
+
+			pRock1Pos++;
+		}
+		if (currTick == pRock2Tick[pRock2Pos]) {
+			Serial.print("\tNote: ");
+			Serial.print(pRock2Key[pRock2Pos]);
+			Serial.print("\tFreq: ");
+			Serial.print(pianoFreq[pRock2Key[pRock2Pos]]);
+			pRock2Pos++;
+		}
+
+		Serial.println();
 	}
 	
 }
 
 void restartTrack() {
 	Serial.println("Restarting track.");
-	trackStartTime = millis();
-	currTick = -1;
-	lastTick = -1;
-	synth1TrackPos = -1;
+	currTick = lastTick = -1;
+	lastTickMs = 0;
+	pRock1Pos = pRock2Pos = 0;
 	synthOff(synthAddr[0]);
 }
