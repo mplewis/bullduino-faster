@@ -47,10 +47,10 @@ void setup() {
 
 	Wire.begin();
 
-	for (int i = 0; i < numSynths; i++) {
-		synthOff(synthAddr[i]);
-		synthLedOff(synthAddr[i]);
-	}
+	synthOff(addrSyn1);
+	synthLedOff(addrSyn1);
+	synthOff(addrSyn2);
+	synthLedOff(addrSyn2);
 
 	lcd.begin(LCD_HORZ, LCD_VERT);
 	lcd.setBacklight(LOW);
@@ -125,11 +125,13 @@ void playNote() {
 		}
 
 		if (currTick == pRock1Tick[pRock1Pos]) {
+			/*
 			Serial.print("\tNote: ");
 			Serial.print(pRock1Key[pRock1Pos]);
 			Serial.print("\tFreq: ");
 			Serial.print(pianoFreq[pRock1Key[pRock1Pos]]);
-
+			*/
+			
 			synthSetFreq(addrSyn1, pianoFreq[pRock1Key[pRock1Pos]]);
 			synthOn(addrSyn1);
 
@@ -137,11 +139,24 @@ void playNote() {
 
 			pRock1Pos++;
 		}
+
+		if (currTick == pRock2NoteOffTick) {
+			synthOff(addrSyn2);
+		}
+
 		if (currTick == pRock2Tick[pRock2Pos]) {
+			/*
 			Serial.print("\tNote: ");
 			Serial.print(pRock2Key[pRock2Pos]);
 			Serial.print("\tFreq: ");
 			Serial.print(pianoFreq[pRock2Key[pRock2Pos]]);
+			*/
+			
+			synthSetFreq(addrSyn2, pianoFreq[pRock2Key[pRock2Pos]]);
+			synthOn(addrSyn2);
+
+			pRock2NoteOffTick = currTick + pRock2Dura[pRock2Pos];
+
 			pRock2Pos++;
 		}
 
@@ -152,8 +167,11 @@ void playNote() {
 
 void restartTrack() {
 	Serial.println("Restarting track.");
+
+	synthOff(addrSyn1);
+	synthOff(addrSyn2);
+
 	currTick = lastTick = -1;
 	lastTickMs = 0;
 	pRock1Pos = pRock2Pos = 0;
-	synthOff(synthAddr[0]);
 }
