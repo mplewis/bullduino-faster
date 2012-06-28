@@ -23,10 +23,6 @@ const int pinLcdLatch = 11;
 // Connect LCD via SPI using the Adafruit library: https://github.com/adafruit/LiquidCrystal
 LiquidCrystal lcd(pinLcdData, pinLcdClk, pinLcdLatch);
 
-// tracks: Party Rock Anthem, Harder Better Faster Stronger, Sabotage, D.A.N.C.E., Trololo
-const int pinNextTrack = 2;
-Button nextTrack = Button(pinNextTrack, BUTTON_PULLUP);
-
 const int pinPedometer = 3;
 Button pedometer = Button(pinPedometer, BUTTON_PULLUP);
 const int tempoArraySize = 5;
@@ -45,8 +41,6 @@ void setup() {
 	pinMode(pinLcdClk, OUTPUT);
 	pinMode(pinLcdLatch, OUTPUT);
 
-	pinMode(pinNextTrack, INPUT);
-	digitalWrite(pinNextTrack, HIGH);
 	pinMode(pinPedometer, INPUT);
 	digitalWrite(pinPedometer, HIGH);
 
@@ -66,8 +60,6 @@ void setup() {
 	lcd.setCursor(0, 1);
 	lcd.print("90      ...      200");
 
-	updateTrackDisplay();
-
 	Serial.println("Ready to go!");
 }
 
@@ -83,57 +75,43 @@ void readButtons() {
 	/* if (pedometer.uniquePress()) {
 		updateTempo();
 	} */
-	if (nextTrack.uniquePress()) {
-		changeTrack();
-	}
-	// digitalWrite(pinDebug, nextTrack.isPressed());
 }
 
 void checkPulse() {
-	if (B) { // B is true when a pulse is triggered
-		// Serial.print(" B");
-		B = false; // Reset B for next time
+	if (B) { 				// B is true when a pulse is triggered
+		B = false; 			// Reset B for next time
 	}
-	if (QS) { // QS is true when a heart rate is calculated
-		// Serial.println();
-		// Serial.print(BPM);
+	if (QS) {				// QS is true when a heart rate is calculated
 		updateHR();
-		QS = false; // reset for next time
+		QS = false;			// Reset QS for next time
 	}
 }
 
 void updateHR() {
 	lcd.setCursor(8, 1);
-	if (BPM < 100) {
-		lcd.print(" ");
+	lcd.print("    ");				// clear display HR section
+	lcd.setCursor(8, 1);
+	if (BPM < 0 || BPM > 999) {
+		lcd.print("...");			// don't print bad (negative, >999) HRs
+	} else if (BPM < 100) {		
+		lcd.print(" ");				// insert spacing for 2-digit HRs
+		lcd.print(BPM);				// print HR to display
+	} else {
+		lcd.print(BPM);				// print HR to display
 	}
-	lcd.print(BPM);
+	
 }
 
 void playNote() {
 
-	currTick = ((millis() - trackStartTime) / currMsPerTick) - 1; // -1 to start indexing at 0
+	currTick = ((millis() - trackStartTime) / msPerTick) - 1; // -1 to start indexing at 0
 	if (currTick > lastTick) {
 		Serial.print(currTick);
 		Serial.print('\t');
-		Serial.print(partyRock1Tick[synth1TrackPos]);
+		Serial.print(pRock1Tick[synth1TrackPos]);
 		Serial.print('\t');
 		Serial.println(synth1TrackPos);
 		lastTick = currTick;
-		digitalWrite(pinDebug, !digitalRead(pinDebug));
-		if (partyRock1Dura[synth1TrackPos] + partyRock1Tick[synth1TrackPos - 1] == currTick) {
-			synthOff(synthAddr[0]);
-		}
-		if (partyRock1Note[synth1TrackPos] == -1 && partyRock1Tick[synth1TrackPos] == currTick) {
-			restartTrack();
-		}
-		if (partyRock1Tick[synth1TrackPos + 1] == currTick) {
-			synth1TrackPos++;
-			Serial.print("Note: ");
-			Serial.println(partyRock1Note[synth1TrackPos]);
-			synthOn(synthAddr[0]);
-			synthSetFreq(synthAddr[0], partyRock1Note[synth1TrackPos]);
-		}
 	}
 	
 }
@@ -145,37 +123,4 @@ void restartTrack() {
 	lastTick = -1;
 	synth1TrackPos = -1;
 	synthOff(synthAddr[0]);
-}
-
-void changeTrack() {
-
-	currTrack++;
-	if (currTrack == numTracks) {
-		currTrack = 0;
-	}
-
-	Serial.print("Track changed: ");
-	Serial.println(currTrack);
-
-	currBPM = bpmDB[currTrack];
-	currTicksPerBeat = ticksPerBeatDB[currTrack];
-	currMsPerTick = (60000 / currBPM) / currTicksPerBeat;
-	
-	restartTrack();
-
-	updateTrackDisplay();
-
-}
-
-void updateTrackDisplay() {
-	char* trackTitles[5] = {
-		"PrtyRckAnthem",
-		"HrdBetFstStrg",
-		"Sabotage     ",
-		"D.A.N.C.E.   ",
-		"Trolololololo"
-	};
-	lcd.setCursor(0, 3);
-	lcd.print("Track: ");
-	lcd.print(trackTitles[currTrack]);
 }
