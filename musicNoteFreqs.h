@@ -42,8 +42,10 @@
 #define nB5  987.767
 #define nAs5 932.328
 #define nA5  880.000
-#define nGs5 830.609
-#define nG5  783.991
+// #define nGs5 830.609 seems wrong
+#define nGs5 840.000
+// #define nG5  783.991 seems wrong
+#define nG5  789.000
 #define nFs5 739.989
 #define nF5  698.456
 #define nE5  659.255
@@ -91,9 +93,11 @@
 #define nFs2 92.4986
 #define nF2  87.3071
 #define nE2  82.4069
-#define nDs2 77.7817
+// #define nDs2 77.7817 seems wrong
+#define nDs2 77.2500
 #define nD2  73.4162
-#define nCs2 69.2957
+// #define nCs2 69.2957 seems wrong
+#define nCs2 68.5000
 #define nC2  65.4064
 
 #define nB1  61.7354

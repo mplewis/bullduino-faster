@@ -23,6 +23,10 @@ LiquidCrystal lcd(pinLcdData, pinLcdClk, pinLcdLatch);
 
 const int pinPedometer = 3;
 Bounce pedometer = Bounce(pinPedometer, 5); // 5ms debounce time
+
+const int pinChipEnable = 2; // active low
+bool chipEnable = true;
+
 const int tempoArraySize = 5;
 int lastTempo[tempoArraySize] = {0};
 int tempoArrayPos = 0;
@@ -32,26 +36,37 @@ const int pinDebug = 13;
 
 
 void setup() {
-	Serial.begin(115200);
+	Serial.begin(9600);
 
+	Serial.println("Binding LCD pins...");
 	pinMode(pinLcdData, OUTPUT);
 	pinMode(pinLcdClk, OUTPUT);
 	pinMode(pinLcdLatch, OUTPUT);
 
+	Serial.println("Binding pedometer pin...");
 	pinMode(pinPedometer, INPUT);
 	digitalWrite(pinPedometer, HIGH);
 
+	Serial.println("Binding chipEnable pin...");
+	pinMode(pinChipEnable, INPUT);
+	digitalWrite(pinChipEnable, HIGH);
+
+	Serial.println("Binding debug LED...");
 	pinMode(pinDebug, OUTPUT);
 
+	Serial.println("Setting up HR timers...");
 	setupTimersHeartMon();
 
+	Serial.println("Starting I2C...");
 	Wire.begin();
 
+	Serial.println("Initializing ATtiny synths...");
 	synthOff(addrSyn1);
 	synthLedOff(addrSyn1);
 	synthOff(addrSyn2);
 	synthLedOff(addrSyn2);
 
+	Serial.println("Starting LCD...");
 	lcd.begin(LCD_HORZ, LCD_VERT);
 	lcd.setBacklight(LOW);
 	lcd.setCursor(0, 1);
@@ -64,11 +79,22 @@ void loop() {
 
 	readButtons();
 	checkPulse();
-	playNote();
+	if (chipEnable) {
+		playNote();
+	} else {
+		synthOff(addrSyn1);
+		synthOff(addrSyn2);
+	}
 
 }
 
 void readButtons() {
+	if (digitalRead(pinChipEnable) == LOW) { // 
+		chipEnable = true;
+	} else {
+		chipEnable = false;
+	}
+
 	pedometer.update();
 	if (pedometer.risingEdge()) {
 		updateTempo();
@@ -111,7 +137,7 @@ void playNote() {
 		lastTick = currTick;
 		currTick++;
 
-		if (currTick == resetTick) {
+		if (currTick == finalTick) {
 			restartTrack();
 		} else if (/* currTick % ticksPerBeat == 0 */ true) {
 			Serial.print("Time: ");
@@ -120,22 +146,31 @@ void playNote() {
 			Serial.print(currTick);
 		}
 
+		// catch up to looped section
+		while (pgm_read_word_near(pRock1Tick + pRock1Pos) < currTick) {
+			pRock1Pos++;
+		}
+
+		while (pgm_read_word_near(pRock2Tick + pRock2Pos) < currTick) {
+			pRock2Pos++;
+		}
+
 		if (currTick == pRock1NoteOffTick) {
 			synthOff(addrSyn1);
 		}
 
-		if (currTick == pRock1Tick[pRock1Pos]) {
+		if (currTick == pgm_read_word_near(pRock1Tick + pRock1Pos)) {
 			/*
 			Serial.print("\tNote: ");
-			Serial.print(pRock1Key[pRock1Pos]);
+			Serial.print(pgm_read_word_near(pRock1Key + pRock1Pos));
 			Serial.print("\tFreq: ");
-			Serial.print(pianoFreq[pRock1Key[pRock1Pos]]);
-			*/
+			Serial.print(pianoFreq[pgm_read_word_near(pRock1Key + pRock1Pos)]);
+			//*/
 			
-			synthSetFreq(addrSyn1, pianoFreq[pRock1Key[pRock1Pos]]);
+			synthSetFreq(addrSyn1, pianoFreq[pgm_read_word_near(pRock1Key + pRock1Pos)]);
 			synthOn(addrSyn1);
 
-			pRock1NoteOffTick = currTick + pRock1Dura[pRock1Pos];
+			pRock1NoteOffTick = currTick + pgm_read_word_near(pRock1Dura + pRock1Pos);
 
 			pRock1Pos++;
 		}
@@ -144,18 +179,18 @@ void playNote() {
 			synthOff(addrSyn2);
 		}
 
-		if (currTick == pRock2Tick[pRock2Pos]) {
+		if (currTick == pgm_read_word_near(pRock2Tick + pRock2Pos)) {
 			/*
 			Serial.print("\tNote: ");
-			Serial.print(pRock2Key[pRock2Pos]);
+			Serial.print(pgm_read_word_near(pRock2Key + pRock2Pos));
 			Serial.print("\tFreq: ");
-			Serial.print(pianoFreq[pRock2Key[pRock2Pos]]);
-			*/
+			Serial.print(pianoFreq[pgm_read_word_near(pRock2Key + pRock2Pos)]);
+			//*/
 			
-			synthSetFreq(addrSyn2, pianoFreq[pRock2Key[pRock2Pos]]);
+			synthSetFreq(addrSyn2, pianoFreq[pgm_read_word_near(pRock2Key + pRock2Pos)]);
 			synthOn(addrSyn2);
 
-			pRock2NoteOffTick = currTick + pRock2Dura[pRock2Pos];
+			pRock2NoteOffTick = currTick + pgm_read_word_near(pRock2Dura + pRock2Pos);
 
 			pRock2Pos++;
 		}
@@ -171,7 +206,7 @@ void restartTrack() {
 	synthOff(addrSyn1);
 	synthOff(addrSyn2);
 
-	currTick = lastTick = -1;
+	currTick = lastTick = firstTick - 1;
 	lastTickMs = 0;
 	pRock1Pos = pRock2Pos = 0;
 }
